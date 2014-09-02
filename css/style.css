@@ -1,0 +1,56 @@
+body {
+  padding: 0;
+  margin: 0;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: 'Trebechut MS', sans-serif !important;
+}
+
+h4 a {
+  color: black;
+  text-decoration: underline;
+}
+
+h4 a:hover {
+  color: #999;
+}
+
+header {
+   position: absolute;
+   z-index:500; 
+   background: url(../img/header-bg.png) repeat-x;
+   height: 75px;
+   width: 100%;
+   border-bottom: 5px solid #3e6d42;
+   text-align: right;
+}
+
+header a {
+  display: inline-block;
+  margin-right: 25px;
+  margin-top: 15px;
+  color: white !important;
+}
+
+section ul li {
+  margin-bottom: 0.5em;
+}
+
+.text-right {
+  text-align: right;
+}
+
+pre code {
+  padding: 25px !important;
+  border-radius: 2px;
+  overflow: auto !important;
+}
+
+.fragment.current-visible {
+  display: none;
+}
+
+.fragment.current-visible.current-fragment {
+  display: initial;
+}

@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>GeoScript - The GeoSpatial Swiss Army Knife</title>
+
+		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+		<meta name="author" content="Hakim El Hattab">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/simple.css" id="theme">
+		<link rel="stylesheet" href="css/style.css">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+			<header><a href="http://geoscript.org">http://geoscript.org</a></header>
+			<div class="slides">
+
+				<section>
+					<h1>GeoScript</h1>
+					<h3>The GeoSpatial Swiss Army Knife</h3>
+					<p>
+						<small>Jared Erickson &amp; Justin Deoliveira</small>
+					</p>
+				</section>
+
+				<section>
+					<section>
+						<h2>What is GeoScript?</h2>
+						<p>Spatial capabilities for scripting languages on the JVM.</p>
+						<ul>
+							<li class="fragment">Groovy, Python, Javascript, Scala, Ruby</li>
+							<li class="fragment">Similar API across languages</li>
+							<li class="fragment">Convenience for JTS and GeoTools</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>GeoScript Modules</h2>
+						<img src="img/modules.png"></img>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Buffer a Point</h2>
+						<p class="text-right">Java</p>
+						<pre>
+						  <code data-trim contenteditable class="java">
+GeometryFactory geometryFactory = new GeometryFactory();
+Point point = geometryFactory.createPoint(new Coordinate(-122.478899, 47.268195));
+point.buffer(10);
+							</code>
+					  </pre>
+					</section>
+					<section>
+						<h2>Buffer a Point</h2>
+						<p class="text-right">Groovy</p>
+						<pre>
+						  <code data-trim contenteditable class="groovy">
+new Point(-122.478899, 47.268195).buffer(10)
+							</code>
+					  </pre>
+					  <p class="text-right">Python</p>
+						<pre>
+						  <code data-trim contenteditable class="python">
+Point(-122.478899, 47.268195).buffer(10)
+							</code>
+					  </pre>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Render a Map</h2>
+						<p class="text-right">Java</p>
+						<pre>
+						  <code data-trim contenteditable class="java">
+StyleFactory styleFactory = CommonFactoryFinder.getStyleFactory(null);
+SLDParser parser = new SLDParser(styleFactory, new File("states.sld"));
+Style style = parser.readXML()[0];
+   
+ShapefileDataStore shapefile = new ShapefileDataStore(new File("states.shp").toURI().oURL());
+FeatureSource&lt;SimpleFeatureType, SimpleFeature> features = 
+   shapefile.getFeatureSource(shapefile.getTypeNames()[0]);
+ 
+MapContext context = new DefaultMapContext(new MapLayer[]{
+ new DefaultMapLayer(features, style)
+});
+ 
+BufferedImage image = new BufferedImage(300, 300, BufferedImage.TYPE_INT_ARGB);
+Graphics2D graphics = image.createGraphics();
+Rectangle screenArea = new Rectangle(0, 0, 300, 300);
+ReferencedEnvelope mapArea = features.getBounds();
+
+StreamingRenderer renderer = new StreamingRenderer();
+renderer.setContext(context);
+renderer.paint(graphics, screenArea, mapArea);
+
+ImageIO.write(image, "png", new File("states.png"));
+							</code>
+					  </pre>
+					</section>
+
+					<section>
+						<h2>Render a Map</h2>
+						<p class="text-right">Groovy</p>
+						<pre>
+						  <code data-trim contenteditable class="groovy">
+Layer layer = new Shapefile("states.shp")
+layer.style = new SLDReader().read(new File("states.sld"))
+
+Map map = new Map(layers: [layer], width: 300, height: 300)
+map.render(new File("states.png"))
+							</code>
+					  </pre>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Load PostGIS Features</h2>
+						<p class="text-right">Java</p>
+						<pre>
+						  <code data-trim contenteditable class="java">
+Map&lt;String, Object> params = new HashMap&lt;String, Object>();
+params.put("dbtype", "postgis");
+params.put("database", "usa");
+params.put("schema", "public");
+params.put("host", "localhost");
+params.put("port", "5432");
+params.put("user", "bob");
+
+DataStore dataStore = DataStoreFinder.getDataStore(params);
+try {
+   SimpleFeatureSource featureSource = dataStore.getFeatureSource("states");
+   SimpleFeatureCollection featureCollection = featureSource.getFeatures();
+   SimpleFeatureIterator it = featureCollection.features();
+   try {
+     while(it.hasNext()) {
+       SimpleFeature f = it.next();
+       System.out.println(f.getAttribute("STATE_NAME") + " at " + ((Geometry)f.DefaultGeometry()).getCentroid().toText());
+     }
+   } finally {
+      it.close();
+   }
+} finally {
+   dataStore.dispose();
+}
+							</code>
+					  </pre>
+					</section>
+					
+					<section>
+						<h2>Load PostGIS Features</h2>
+						<p class="text-right">Python</p>
+						<pre>
+						  <code data-trim contenteditable class="python">
+PostGIS db = new PostGIS('usa', user: 'bob')
+for f in db['states'].features():
+  print '%s at %s' % (f['STATE_NAME'], f.geom.centroid)
+							</code>
+					  </pre>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Create a Shapefile</h2>
+						<p class="text-right">Java</p>
+						<pre>
+						  <code data-trim contenteditable class="java">
+SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
+featureTypeBuilder.setName("points");
+featureTypeBuilder.setSRS("EPSG:4326");
+featureTypeBuilder.add("the_geom", Point);
+featureTypeBuilder.add("id", Integer);
+featureTypeBuilder.add("name", String);
+
+SimpleFeatureType featureType = featureTypeBuilder.buildFeatureType();
+ 
+File file = new File("points.shp");
+Map&lt;String,Object> params = new HashMap&lt;String, Object>();
+params.put("url", DataUtilities.fileToURL(file));
+
+DataStore dataStore = DataStoreFinder.getDataStore(params);
+dataStore.createSchema(featureType);
+SimpleFeatureStore featureStore = (SimpleFeatureStore) dataStore.FeatureSource("points");
+
+SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(featureType);
+GeometryFactory geometryFactory = new GeometryFactory();
+
+FeatureCollection features = new DefaultFeatureCollection(null, featureType)
+
+featureBuilder.add(geometryFactory.createPoint(new Coordinate(1, 1)));
+featureBuilder.add(1);
+featureBuilder.add("one");
+features.add(featureBuilder.buildFeature(null));
+
+featureBuilder.add(geometryFactory.createPoint(new Coordinate(2, 2)));
+featureBuilder.add(2);
+featureBuilder.add("two");
+features.add(featureBuilder.buildFeature(null));
+
+featureStore.addFeatures(features);
+
+dataStore.dispose();
+						  </code>
+					  </pre>
+				  </section>
+				  <section>
+						<h2>Create a Shapefile</h2>
+						<p class="text-right">JavaScript</p>
+						<pre>
+						  <code data-trim contenteditable class="javascript">
+var dir = new Directory('.');
+var shp = dir.add(new Layer({
+  name: 'points',
+  fields: [{
+    name: 'geom', type: 'Point'
+  }, {
+    name: 'id', type: 'Integer'
+  }, {
+    name: 'name', type: 'String'
+  }]
+});
+shp.add([new Point([1,1], 1, 'one')]);
+shp.add([new Point([2,2], 2, 'two')]);
+						  </code>
+					  </pre>
+				  </section>
+			  </section>
+
+				<section>
+					<section>
+						<h2>What else can I do with GeoScript?</h2>
+					</section>
+
+					<section>
+						<p>Read, write, and translate spatial formats</p>
+					  <pre>
+					    <code data-trim contenteditable class="groovy">
+TODO: Jared, quick example of translating a Shapefile to PostGIS
+					    </code>
+					  </pre>
+					</section>
+					<section>
+						<p>Encode and decode exchange formats like GeoJSON, GML, WKT, and WKB</p>
+					  <pre>
+					    <code data-trim contenteditable class="python">
+from geoscript.geom import readJSON, writeGML, readWKT, writeWKB
+writeGML(readJSON("""{"type":"Point", "coordinates":[1,2]}"""))
+writeWKB(readWKT("POINT (1 2)"))
+					    </code>
+					  </pre>
+					</section>
+					<section>
+						<p>Process and transform data on the fly</p>
+					  <pre>
+					    <code data-trim contenteditable class="javascript">
+var proj = require('geoscript/proj')
+var Directory = require('geoscript/workspace').Directory
+var Layer = require('geoscript/layer').Layer
+
+var shp = new Directory('.').get('states.shp')
+var points = new Layer({
+  name: 'Points',
+  fields: [{
+    name: 'geom', type: 'Point'
+  }]
+});
+
+shp.features.forEach(function(f) {
+  points.add({name: proj.transform(f.get('geom').centroid)});
+});
+					    </code>
+					  </pre>
+					</section>
+					<section>
+						<p>Generate styles for rendering maps</p>
+					  <pre>
+					    <code data-trim contenteditable class="python">
+from geoscript.style import *
+from geoscript.render import *
+from geoscript.layer import Shapefile
+
+style = Fill('#4DFF4D', 0.7).where('PERSONS &lt; 2000000')
+style +=  Fill('#FF4D4D',0.7).where('PERSONS BETWEEN 2000000 AND 4000000')
+style += Fill('#4D4DFF',0.7).where('PERSONS > 4000000')
+style += Stroke(width=0.2) + Label('STATE_ABBR', 'Times New Roman 14px')
+
+draw(Shapefile('states.shp'), style)
+					    </code>
+					  </pre>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>How can I use GeoScript?</h2>
+					</section>
+
+					<section>
+					  <h2>Read Eval Print Loop (REPL)</h2>
+					  <img>
+					  </img>
+					</section>
+
+					<section>
+					  <h2>GeoServer WPS</h2>
+				  </section>
+
+				  <section>
+				    <img src="img/geoserver-script1.png"></img>
+				  </section>
+				  <section>
+				    <img src="img/geoserver-script2.png"></img>
+				  </section>
+
+					<section>
+					  <h2>uDig Spatial Toolbox</h2>
+					</section>
+
+					<section>
+						<p>
+						TODO: uDig scripting pic
+						</p>
+					</section>
+
+					<section>
+					  <h2>As a Library</h2>
+				  </section>
+
+				  <section>
+					  <div style="text-align: right;">
+					  	<img src="img/maven-logo.png"></img>
+					  </div>
+			      <pre>
+							<code data-trim contenteditable class="xml">
+&lt;repository>
+    &lt;id>boundless&lt;/id>
+    &lt;name>Boundless Maven Repository&lt;/name>
+    &lt;url>http://repo.boundlessgeo.com/main&lt;/url>
+    &lt;snapshots>
+        &lt;enabled>true&lt;/enabled>
+    &lt;/snapshots>
+&lt;/repository>
+&lt;dependency>
+    &lt;groupId>org.geoscript&lt;/groupId>
+    &lt;artifactId>geoscript-groovy&lt;/artifactId>
+    &lt;version>1.3&lt;/version>
+&lt;/dependency>
+							</code>
+						</pre>
+					</section>
+
+					<section>
+					  <div style="text-align: right;">
+					  	<img src="img/gradle-logo.png"></img>
+					  </div>
+			      <pre>
+							<code data-trim contenteditable class="groovy">
+repositories {
+  maven {
+     url "http://repo.boundlessgeo.com/main"
+  }
+}
+dependencies {
+  compile "org.geoscript:geoscript-py:1.3"
+}
+							</code>
+						</pre>
+					</section>
+
+				</section>
+
+				<section>
+					<div>
+						<a class="image" href="https://www.locationtech.org/">
+						  <img src="img/locationtech-logo.png"></img>
+					  </a>
+				  </div>
+				  <h4>
+				  	<a href="http://locationtech.org">http://locationtech.org</a>
+				  </h4>
+				</section>
+
+				<section>
+					<h2>Some Real World Examples</h2>
+					<div style="float: left; width: 50%;">
+					  <p>
+					  Land Area Statistics
+					  </p>
+					</div>
+					<div style="float: left; width: 50%;">
+						<p>
+						WNV Spatial Analysis
+						</p>
+					</div>
+				</section>
+
+				<section>
+					<h1>Thanks</h1>
+					<h4><a href="http://geoscript.org">http://geoscript.org</a></h4>
+					<h4><a href="mailto:geoscript@googlegroups.com">geoscript@googlegroups.com</a></h4>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/jquery-1.11.1.min.js"></script>
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				backgroundTransition: 'slide',
+				transition: 'linear',
+				//transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Parallax scrolling
+				// parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+				// parallaxBackgroundSize: '2100px 900px',
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+
+			// $(document).ready(function() {
+			// 	$('.slides > section').each(function(i) {
+			// 		$(this).attr('data-state', i===0?'initial':'slide');
+			// 	});
+			// });
+			Reveal.addEventListener('slidechanged', function(e) {
+				$('header').toggle(e.indexh === 0);
+			});
+
+			Reveal.addEventListener('fragmentshown', function(e) {
+				$.each(e.fragments, function(f) {
+					$(f).show();
+				});
+
+			});
+			Reveal.addEventListener('fragmenthidden', function(e) {
+				$.each(e.fragments, function(f) {
+					$(f).hide();
+				});
+			});
+			// Reveal.addEventListener('initial', function() {
+			// 	$('header').show();
+			// });
+			// Reveal.addEventListener('slide', function() {
+			// 	$('header').hide();
+			// });
+
+		</script>
+
+	</body>
+</html>
