@@ -258,7 +258,15 @@ shp.add([new Point([2,2], 2, 'two')]);
 						<p>Read, write, and translate spatial formats</p>
 					  <pre>
 					    <code data-trim contenteditable class="groovy">
-TODO: Jared, quick example of translating a Shapefile to PostGIS
+import geoscript.workspace.*
+import geoscript.layer.Layer
+
+File dir = new File("shp")
+PostGIS postgis = new PostGIS("naturalearth")
+Directory directory = new Directory(dir)
+directory.layers.each { Layer layer ->
+    postgis.add(layer)
+}
 					    </code>
 					  </pre>
 					</section>
@@ -320,8 +328,7 @@ draw(Shapefile('states.shp'), style)
 
 					<section>
 					  <h2>Read Eval Print Loop (REPL)</h2>
-					  <img>
-					  </img>
+					  <img src="img/repl.png"/>
 					</section>
 
 					<section>
@@ -340,9 +347,7 @@ draw(Shapefile('states.shp'), style)
 					</section>
 
 					<section>
-						<p>
-						TODO: uDig scripting pic
-						</p>
+					  <img src="img/udig.png"/>
 					</section>
 
 					<section>
