@@ -97,15 +97,15 @@ Point(-122.478899, 47.268195).buffer(10)
 StyleFactory styleFactory = CommonFactoryFinder.getStyleFactory(null);
 SLDParser parser = new SLDParser(styleFactory, new File("states.sld"));
 Style style = parser.readXML()[0];
-   
+
 ShapefileDataStore shapefile = new ShapefileDataStore(new File("states.shp").toURI().oURL());
-FeatureSource&lt;SimpleFeatureType, SimpleFeature> features = 
+FeatureSource&lt;SimpleFeatureType, SimpleFeature> features =
    shapefile.getFeatureSource(shapefile.getTypeNames()[0]);
- 
+
 MapContext context = new DefaultMapContext(new MapLayer[]{
  new DefaultMapLayer(features, style)
 });
- 
+
 BufferedImage image = new BufferedImage(300, 300, BufferedImage.TYPE_INT_ARGB);
 Graphics2D graphics = image.createGraphics();
 Rectangle screenArea = new Rectangle(0, 0, 300, 300);
@@ -168,7 +168,7 @@ try {
 							</code>
 					  </pre>
 					</section>
-					
+
 					<section>
 						<h2>Load PostGIS Features</h2>
 						<p class="text-right">Python</p>
@@ -196,7 +196,7 @@ featureTypeBuilder.add("id", Integer);
 featureTypeBuilder.add("name", String);
 
 SimpleFeatureType featureType = featureTypeBuilder.buildFeatureType();
- 
+
 File file = new File("points.shp");
 Map&lt;String,Object> params = new HashMap&lt;String, Object>();
 params.put("url", DataUtilities.fileToURL(file));
@@ -319,6 +319,25 @@ draw(Shapefile('states.shp'), style)
 					    </code>
 					  </pre>
 					</section>
+                    <section>
+                        <p>Crop Rasters based on Geometries</p>
+                        <pre>
+                            <code data-trim contenteditable class="groovy">
+import geoscript.layer.*
+import geoscript.geom.Point
+import geoscript.proj.Projection
+
+def geoTiffFormat = new GeoTIFF(new File("raster.tif"))
+def raster = geoTiffFormat.read(new Projection("urn:ogc:def:crs:EPSG::EPSG:4326"))
+
+def geom = new Point(50,50).buffer(20)
+def croppedRaster = raster.crop(geom)
+
+GeoTIFF croppedGeoTIFF = new GeoTIFF(new File("raster_circle_cropped.tif"))
+geoTiffFormat.write(croppedRaster)
+                            </code>
+                        </pre>
+                    </section>
 				</section>
 
 				<section>
@@ -409,17 +428,153 @@ dependencies {
 				</section>
 
 				<section>
-					<h2>Some Real World Examples</h2>
-					<div style="float: left; width: 50%;">
-					  <p>
-					  Land Area Statistics
-					  </p>
-					</div>
-					<div style="float: left; width: 50%;">
-						<p>
-						WNV Spatial Analysis
-						</p>
-					</div>
+                    <section>
+                        <h2>Some Real World Examples</h2>
+                        <div style="float: left; width: 50%;">
+                          <p>
+                          Land Area Statistics
+                          </p>
+                        </div>
+                        <div style="float: left; width: 50%;">
+                            <p>
+                            WNV Spatial Analysis
+                            </p>
+                        </div>
+                    </section>
+                    <section>
+                        <h2>WNV Spatial Analysis</h2>
+                        <p>Goal was to create an animated map showing spread of WNV by state</p>
+                    </section>
+                    <section>
+                        <p>CDC Data in PDF</p>
+                        <img src="img/wnv_pdf.png"/>
+                    </section>
+                    <section>
+                        <p>Get Text from PDF</p>
+					    <pre>
+					       <code data-trim contenteditable class="groovy">
+@Grapes(
+    @Grab(group='com.lowagie', module='itext', version='2.1.7')
+)
+import com.lowagie.text.pdf.parser.PdfTextExtractor
+import com.lowagie.text.pdf.PdfReader
+
+// Use iText to extract text from PDF
+URL url = new URL("http://www.cdc.gov/westnile/resources/pdfs/cummulative/99_2013_cummulativeHumanCases.pdf")
+PdfReader reader = new PdfReader(url)
+PdfTextExtractor parser =new PdfTextExtractor(reader)
+
+// Write text to a file in the data directory
+File dir = new File("data")
+dir.mkdir()
+File file = new File(dir, "data.dat")
+file.write(parser.getTextFromPage(1))
+                           </code>
+                        </pre>
+                    </section>
+                    <section>
+                        <p>Convert text into CSV</p>
+					    <pre>
+					       <code data-trim contenteditable class="groovy">
+State,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,Total
+Alabama,0,0,2,49,37,16,10,8,24,18,0,3,5,62,9,243
+Alaska,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Arizona,0,0,0,0,13,391,113,150,97,114,20,167,69,133,62,1329
+Arkansas,0,0,0,43,25,28,28,29,20,9,6,7,1,64,18,278
+...
+                           </code>
+                        </pre>
+                    </section>
+                    <section>
+                        <p>Get data from Natural Earth</p>
+					    <pre>
+					       <code data-trim contenteditable class="groovy">
+URL url = new URL("http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/110m/cultural/ne_110m_admin_1_states_provinces_lakes.zip")
+File file = new File("data/ne_110m_admin_1_states_provinces_lakes.zip")
+if (!file.exists()) {
+	url.withInputStream { inp -&gt;
+    	file.withOutputStream { out -&gt;
+        	out &lt;&lt; inp
+    	}
+    }
+}
+File dir = new File("data")
+def ant = new AntBuilder()
+ant.unzip(src: file, dest: dir)
+                           </code>
+                        </pre>
+                    </section>
+                    <section>
+                        <p>Join WNV Data to Natural Earth data</p>
+					    <pre>
+					       <code data-trim contenteditable class="groovy">
+Workspace wk = new Directory("data")
+Layer inLayer = wk.get("ne_110m_admin_1_states_provinces_lakes")
+Schema schema = inLayer.schema
+Schema newSchema = schema.addFields(newFields, "states")
+Layer outLayer = wk.create(newSchema)
+
+outLayer.withWriter { Writer w ->
+    inLayer.eachFeature { Feature f ->
+    	w.add(f)
+    }
+}
+
+lines.subList(1, lines.size()).each { String line ->
+    List items = line.split(",")
+    String name = items[0]
+    if (name.equals("Dist. of")) {
+        name = "District of Columbia"
+    }
+    Filter filter = new Filter("name='${name}'")
+    items.eachWithIndex{ String item, int c ->
+        String fieldName = fieldNames[c]
+        if (!fieldName.equals("State")) {
+            Field field = outLayer.schema.field("y" + fieldName)
+            outLayer.update(field, Double.parseDouble(item), filter)
+        }
+    }
+}
+                           </code>
+                        </pre>
+                    </section>
+                    <section>
+                        <p>Draw maps of WNV spread for each year</p>
+					    <pre>
+					       <code data-trim contenteditable class="groovy">
+List images = years.collect { String year ->
+    String name = "y${year}"
+    Field field = layer.schema.get(name)
+    Gradient style = new Gradient(layer, field, "EqualInterval", 5, "Reds")
+    layer.style = style
+
+    Map map = new Map(
+        layers: [osm, layer],
+        bounds: layer.bounds.expandBy(0.3),
+        proj: layer.proj,
+        backgroundColor: "white",
+        type: "gif"
+    )
+    def image = map.renderToImage()
+
+    def graphics = image.graphics
+    graphics.paint = Color.BLACK
+    graphics.font = new java.awt.Font("Arial", java.awt.Font.BOLD, 32)
+    graphics.drawString(year,5,30)
+    graphics.dispose()
+    ImageIO.write(image, "gif", new File(dir, "${year}.gif"))
+    image
+}
+
+GIF gif = new GIF()
+gif.renderAnimated(images, new File(dir, "wnv.gif"), 1000)
+                           </code>
+                        </pre>
+                    </section>
+                    <section>
+                        <p>WNV Spread by Year</p>
+                        <img src="img/wnv.gif"/>
+                    </section>
 				</section>
 
 				<section>
