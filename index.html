@@ -281,6 +281,24 @@ writeWKB(readWKT("POINT (1 2)"))
 					  </pre>
 					</section>
 					<section>
+						<p>Analyze data distribution</p>
+						<pre>
+						  <code data-trim contenteditable class="python">
+from geoscript.layer import GeoTIFF
+dem = Shapefile('dem.tif')
+
+h = dem.histogram()
+data = zip(map(lambda (x,y): y, h.bins()), h.counts())
+
+bar.xy(data, xlabel='Elevation').show()
+						  </code>
+					  </pre>
+					</section>
+					<section>
+						<p>Analyze data distribution</p>
+						<img src="img/histo.png"></img>
+					</section>
+					<section>
 						<p>Process and transform data on the fly</p>
 					  <pre>
 					    <code data-trim contenteditable class="javascript">
@@ -319,6 +337,11 @@ draw(Shapefile('states.shp'), style)
 					    </code>
 					  </pre>
 					</section>
+					<section>
+						<p>Generate styles for rendering maps</p>
+						<img src="img/states.png"></img>
+					</section>
+
                     <section>
                         <p>Crop Rasters based on Geometries</p>
                         <pre>
