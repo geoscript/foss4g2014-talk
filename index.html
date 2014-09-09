@@ -285,7 +285,7 @@ writeWKB(readWKT("POINT (1 2)"))
 						<pre>
 						  <code data-trim contenteditable class="python">
 from geoscript.layer import GeoTIFF
-dem = Shapefile('dem.tif')
+dem = GeoTIFF('dem.tif')
 
 h = dem.histogram()
 data = zip(map(lambda (x,y): y, h.bins()), h.counts())
@@ -315,7 +315,9 @@ var points = new Layer({
 });
 
 shp.features.forEach(function(f) {
-  points.add({name: proj.transform(f.get('geom').centroid)});
+  points.add({
+      name: proj.transform(f.get('geom').centroid), "epsg:4326", "epsg:26912"
+  });
 });
 					    </code>
 					  </pre>
@@ -343,7 +345,7 @@ draw(Shapefile('states.shp'), style)
 					</section>
 
                     <section>
-                        <p>Crop Rasters based on Geometries</p>
+                        <p>Crop Raster with a Geometry</p>
                         <pre>
                             <code data-trim contenteditable class="groovy">
 import geoscript.layer.*
@@ -361,7 +363,7 @@ new GeoTIFF(new File("raster_circle_cropped.tif")).write(cropped)
                         </pre>
                     </section>
                     <section>
-                        <p>Crop Rasters based on Geometries</p>
+                        <p>Crop Raster with a Geometry</p>
                         <img src="img/raster_cropped.png"/>
                     </section>
 				</section>
