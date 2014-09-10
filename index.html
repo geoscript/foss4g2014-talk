@@ -344,6 +344,26 @@ draw(Shapefile('states.shp'), style)
 						<img src="img/states.png"></img>
 					</section>
 
+          <section>
+            <p>Generate styles for rendering maps</p>
+            <pre>
+              <code data-trim contenteditable class="python">
+shp = Shapefile('counties.shp')
+areas = [f['ALAND'] for f in shp.features()]
+
+ranges = map(lambda r: 'ALAND BETWEEN %f AND %f'%r, zip(areas[:-1], areas[1:]))
+fills = Fill('white').interpolate(Fill('red'), n=99)
+
+style = reduce(lambda x,y:x+y, map(lambda (f,r): f.where(r), zip(fills, ranges)))
+
+draw(shp, style, format='mapwindow')
+              </code>
+            </pre>
+          </section>
+          <section>
+            <p>Generate styles for rendering maps</p>
+            <img src="img/choloro.png"></img>
+          </section>
                     <section>
                         <p>Crop Raster with a Geometry</p>
                         <pre>
@@ -367,6 +387,7 @@ new GeoTIFF(new File("raster_circle_cropped.tif")).write(cropped)
                         <img src="img/raster_cropped.png"/>
                     </section>
 				</section>
+
 
 				<section>
 					<section>
